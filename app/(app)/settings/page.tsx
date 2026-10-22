@@ -39,7 +39,7 @@ export default function SettingsPage() {
         <CardHeader title="Business" />
         <div className="grid gap-3 px-5 pb-5 sm:grid-cols-2">
           <Field label="Business name"><Input value={f.businessName ?? ""} onChange={set("businessName")} disabled={!owner} /></Field>
-          <Field label="WhatsApp number" hint="Digits with country code, e.g. 919876543210"><Input value={f.whatsappNumber ?? ""} onChange={set("whatsappNumber")} disabled={!owner} /></Field>
+          <Field label="WhatsApp number" hint="Any format works, e.g. +91 98765 43210. Customers who tap Buy land in this WhatsApp chat."><Input value={f.whatsappNumber ?? ""} onChange={set("whatsappNumber")} disabled={!owner} /></Field>
           <Field label="Phone (shown to customers)"><Input value={f.phone ?? ""} onChange={set("phone")} disabled={!owner} /></Field>
           <Field label="Low-stock threshold (units)"><Input value={f.lowStockThreshold ?? ""} onChange={set("lowStockThreshold")} inputMode="numeric" disabled={!owner} /></Field>
           <Field label="Slow-moving after (days)"><Input value={f.slowMovingDays ?? ""} onChange={set("slowMovingDays")} inputMode="numeric" disabled={!owner} /></Field>
