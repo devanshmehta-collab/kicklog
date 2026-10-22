@@ -6,6 +6,7 @@ import { READ, WRITE } from "@/lib/auth";
 import { LotInput, lotToPurchase, paise } from "@/lib/schemas";
 import { addProductImage, createPurchase, updateProduct } from "@/lib/services/inventory";
 import { badRequest } from "@/lib/errors";
+import { sortSizes } from "@/lib/sizes";
 import { fileUrl } from "@/lib/storage";
 
 export const GET = api({ roles: READ }, async ({ db }) => {
@@ -16,7 +17,7 @@ export const GET = api({ roles: READ }, async ({ db }) => {
       coalesce((select json_agg(x order by x) from (select distinct v.size as x from product_variants v join inventory_lots l on l.variant_id = v.id where v.product_id = p.id and l.quantity_remaining > 0) s), '[]'::json) as sizes,
       (select url from product_images i where i.product_id = p.id order by is_primary desc, position asc limit 1) as "imageUrl"
     from products p order by p.created_at desc limit 500`);
-  return res.rows;
+  return (res.rows as { sizes: string[] }[]).map((r) => ({ ...r, sizes: sortSizes(r.sizes ?? []) }));
 });
 
 const Create = z.object({

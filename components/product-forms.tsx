@@ -7,6 +7,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { PhotoIntake } from "@/components/image-editor";
+import { SizePicker } from "@/components/size-picker";
 import { Dialog, Field, Input, Select, Textarea } from "@/components/ui/primitives";
 import { ApiError, apiFetch, newKey, useGet, useSend } from "@/lib/client/api";
 import { rupeesToPaise } from "@/lib/money";
@@ -41,11 +42,23 @@ type FormT = z.infer<typeof Schema>;
 const rupee = (s?: string) => (s && s.trim() !== "" && !Number.isNaN(Number(s)) ? rupeesToPaise(Number(s)) : null);
 
 export function AddProductDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { register, control, handleSubmit, reset, formState } = useForm<FormT>({
+  const { register, control, handleSubmit, reset, formState, watch, setValue } = useForm<FormT>({
     resolver: zodResolver(Schema) as never,
-    defaultValues: { category: "sneakers", condition: "new", status: "draft", lots: [{ size: "", quantity: 1, cost: "" }] },
+    defaultValues: { category: "sneakers", condition: "new", status: "draft", lots: [] },
   });
   const { fields, append, remove } = useFieldArray({ control, name: "lots" });
+  const category = watch("category");
+  const lots = watch("lots") ?? [];
+  const [sharedCost, setSharedCost] = React.useState("");
+  const toggleSize = (size: string) => {
+    const i = lots.findIndex((l) => l.size === size);
+    if (i >= 0) remove(i);
+    else append({ size, quantity: 1, cost: sharedCost });
+  };
+  const applySharedCost = (v: string) => {
+    setSharedCost(v);
+    lots.forEach((_, i) => setValue(`lots.${i}.cost`, v, { shouldValidate: false }));
+  };
   const send = useSend<Record<string, unknown>, { productId: string }>("POST", "/api/products");
   const [images, setImages] = React.useState<{ key: string; url: string }[]>([]);
   const [error, setError] = React.useState("");
@@ -111,22 +124,30 @@ export function AddProductDialog({ open, onClose }: { open: boolean; onClose: ()
           <Field label="Description" className="sm:col-span-2"><Textarea rows={2} {...register("description")} /></Field>
         </div>
 
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-medium text-muted">Sizes &amp; acquisition cost (each row becomes its own lot)</span>
-            <Button type="button" variant="ghost" size="sm" onClick={() => append({ size: "", quantity: 1, cost: "" })}><Plus size={14} /> Size</Button>
-          </div>
-          <div className="space-y-2">
-            {fields.map((f, i) => (
-              <div key={f.id} className="grid grid-cols-[1fr_80px_1fr_36px] items-start gap-2">
-                <Input placeholder="Size (10, M, 41mm…)" aria-label="Size" {...register(`lots.${i}.size`)} />
-                <Input placeholder="Qty" aria-label="Quantity" inputMode="numeric" {...register(`lots.${i}.quantity`)} />
-                <Input placeholder="Unit cost ₹" aria-label="Unit cost" inputMode="decimal" {...register(`lots.${i}.cost`)} />
-                <Button type="button" variant="ghost" size="icon" aria-label="Remove size" onClick={() => remove(i)} disabled={fields.length === 1}><Trash2 size={15} /></Button>
+        <div className="space-y-3">
+          <SizePicker category={category} selected={lots.map((l) => l.size)} onToggle={toggleSize} label="Sizes you have" />
+          {fields.length > 0 && (
+            <div className="rounded-xl border border-line p-3">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-medium text-muted">Quantity and cost for each size</span>
+                <label className="flex items-center gap-2 text-xs text-muted">
+                  Same cost for all ₹
+                  <Input className="h-8 w-28" inputMode="decimal" placeholder="e.g. 18000" value={sharedCost} onChange={(e) => applySharedCost(e.target.value)} aria-label="Same unit cost for every size" />
+                </label>
               </div>
-            ))}
-          </div>
-          {errs.lots ? <p className="mt-1 text-xs text-loss">Every size needs a size label, quantity and cost.</p> : null}
+              <div className="space-y-2">
+                {fields.map((f, i) => (
+                  <div key={f.id} className="grid grid-cols-[64px_80px_1fr_36px] items-center gap-2">
+                    <span className="rounded-lg bg-raised px-2 py-2 text-center text-sm font-medium">{lots[i]?.size}</span>
+                    <Input placeholder="Qty" aria-label={`Quantity for size ${lots[i]?.size}`} inputMode="numeric" {...register(`lots.${i}.quantity`)} />
+                    <Input placeholder="Unit cost ₹" aria-label={`Unit cost for size ${lots[i]?.size}`} inputMode="decimal" {...register(`lots.${i}.cost`)} />
+                    <Button type="button" variant="ghost" size="icon" aria-label={`Remove size ${lots[i]?.size}`} onClick={() => remove(i)}><Trash2 size={15} /></Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {errs.lots ? <p role="alert" className="text-xs text-loss">Pick at least one size, and give every size a quantity and a cost.</p> : null}
         </div>
 
         <div>
@@ -227,7 +248,7 @@ export function EditProductDialog({ product, onClose }: { product: ProductLite |
 
 interface Partner { partnerId: string | null; name: string }
 
-export function RestockDialog({ product, onClose }: { product: { id: string; name: string } | null; onClose: () => void }) {
+export function RestockDialog({ product, onClose }: { product: { id: string; name: string; category?: string } | null; onClose: () => void }) {
   const [f, setF] = React.useState({ size: "", quantity: "1", cost: "", intl: false, currency: "USD", price: "", fx: "", country: "", intlShip: "", duty: "", fees: "", domShip: "", supplierId: "", partnerId: "", ownPct: "50", profitPct: "50" });
   const [error, setError] = React.useState("");
   const keyRef = React.useRef(newKey());
@@ -259,7 +280,7 @@ export function RestockDialog({ product, onClose }: { product: { id: string; nam
   return (
     <Dialog open={!!product} onClose={onClose} title={`Restock — ${product?.name ?? ""}`}>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Size / variant"><Input value={f.size} onChange={set("size")} placeholder="10" /></Field>
+        <div className="sm:col-span-2"><SizePicker category={product?.category ?? "sneakers"} selected={f.size ? [f.size] : []} onToggle={(sz) => setF((x) => ({ ...x, size: x.size === sz ? "" : sz }))} label="Size" /></div>
         <Field label="Quantity"><Input value={f.quantity} onChange={set("quantity")} inputMode="numeric" /></Field>
         <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={f.intl} onChange={(e) => setF({ ...f, intl: e.target.checked })} /> International purchase (landed cost)</label>
         {!f.intl ? (

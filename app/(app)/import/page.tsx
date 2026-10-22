@@ -2,6 +2,7 @@
 
 import { PencilLine } from "lucide-react";
 import * as React from "react";
+import { SizePicker } from "@/components/size-picker";
 import { Button } from "@/components/ui/button";
 import { Badge, Card, CardHeader, Field, Input, Select, Textarea } from "@/components/ui/primitives";
 import { ApiError, apiFetch } from "@/lib/client/api";
@@ -156,7 +157,15 @@ export default function ImportPage() {
             <Field label="Retail reference ₹" hint={f.note || undefined}><Input value={f.retail} onChange={set("retail")} inputMode="decimal" /></Field>
             {f.market && <Field label="Indicative market price ₹" hint="Reference only"><Input value={f.market} readOnly /></Field>}
             <Field label="Your public price ₹"><Input value={f.price} onChange={set("price")} inputMode="decimal" /></Field>
-            <Field label="Sizes (comma separated)" className="sm:col-span-2"><Input value={f.sizes} onChange={set("sizes")} /></Field>
+            <div className="sm:col-span-2">
+              <SizePicker
+                category={f.category}
+                label="Sizes offered"
+                selected={f.sizes.split(",").map((x) => x.trim()).filter(Boolean)}
+                onToggle={(sz) => setF((x) => { const cur = x!.sizes.split(",").map((v) => v.trim()).filter(Boolean); return { ...x!, sizes: (cur.includes(sz) ? cur.filter((v) => v !== sz) : [...cur, sz]).join(", ") }; })}
+              />
+              <p className="mt-2 text-xs text-muted">Importing only lists the sizes on the product page. Stock is added later, when you record a purchase.</p>
+            </div>
             <Field label="Description" className="sm:col-span-2"><Textarea rows={3} value={f.description} onChange={set("description")} /></Field>
             {images.length > 0 && (
               <div className="sm:col-span-2">

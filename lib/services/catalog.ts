@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import type { DB } from "../db";
 import { notFound } from "../errors";
+import { sortSizes } from "../sizes";
 
 /**
  * PUBLIC catalogue. This is the only place the customer-facing site reads inventory from, and it
@@ -56,7 +57,7 @@ function map(r: Record<string, unknown>): PublicProduct {
     description: (r.description as string) ?? null,
     pricePaise: Number(r.price),
     images: (r.images as string[]) ?? [],
-    sizes: (r.sizes as string[]) ?? [],
+    sizes: sortSizes((r.sizes as string[]) ?? []),
     createdAt: new Date(r.createdAt as string).toISOString(),
   };
 }
@@ -97,7 +98,7 @@ export function facets(items: PublicProduct[]) {
     brands: uniq(items.map((i) => i.brand)),
     categories: uniq(items.map((i) => i.category)),
     conditions: uniq(items.map((i) => i.condition)),
-    sizes: uniq(items.flatMap((i) => i.sizes)).sort((a, b) => parseFloat(a) - parseFloat(b) || a.localeCompare(b)),
+    sizes: sortSizes(uniq(items.flatMap((i) => i.sizes))),
   };
 }
 
