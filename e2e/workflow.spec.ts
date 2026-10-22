@@ -56,7 +56,7 @@ test("the home page is a product grid that opens WhatsApp, not a login", async (
   await expect(page.getByLabel("Password")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Seller sign in" })).toBeVisible();
   await page.goto("/shop");
-  await expect(page).toHaveURL(/localhost:d+/$/);
+  await expect(page).toHaveURL(/localhost:\d+\/$/);
 });
 
 test("unauthenticated visitors are redirected away from the terminal", async ({ browser }) => {

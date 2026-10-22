@@ -1,11 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { PhotoIntake } from "@/components/image-editor";
 import { Dialog, Field, Input, Select, Textarea } from "@/components/ui/primitives";
 import { ApiError, apiFetch, newKey, useGet, useSend } from "@/lib/client/api";
 import { rupeesToPaise } from "@/lib/money";
@@ -51,19 +52,20 @@ export function AddProductDialog({ open, onClose }: { open: boolean; onClose: ()
   const requestId = React.useRef(newKey());
   const errs = formState.errors;
 
-  async function upload(files: FileList | null) {
-    if (!files) return;
-    for (const f of Array.from(files).slice(0, 6)) {
-      const fd = new FormData();
-      fd.set("file", f);
-      try {
-        const r = await apiFetch<{ key: string; url: string }>("/api/uploads", { method: "POST", body: fd });
-        setImages((cur) => [...cur, r]);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Upload failed");
-      }
+  /** Called with each finished (cropped & resized) photo from the intake. */
+  async function addPhoto(f: File) {
+    const fd = new FormData();
+    fd.set("file", f);
+    try {
+      const r = await apiFetch<{ key: string; url: string }>("/api/uploads", { method: "POST", body: fd });
+      setImages((cur) => [...cur, r]);
+      setError("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
     }
   }
+  const makeFirst = (i: number) => setImages((cur) => [cur[i], ...cur.filter((_, j) => j !== i)]);
+  const removePhoto = (i: number) => setImages((cur) => cur.filter((_, j) => j !== i));
 
   const onSubmit = handleSubmit(async (v) => {
     setError("");
@@ -128,17 +130,25 @@ export function AddProductDialog({ open, onClose }: { open: boolean; onClose: ()
         </div>
 
         <div>
-          <span className="text-xs font-medium text-muted">Photos</span>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {images.map((im) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={im.key} src={im.url} alt="Product" className="h-16 w-16 rounded-lg border border-line object-cover" />
-            ))}
-            <label className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-lg border border-dashed border-line text-muted hover:text-fg">
-              <Upload size={18} />
-              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => upload(e.target.files)} />
-            </label>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-medium text-muted">Photos <span className="font-normal">· the first one is the cover on the shop</span></span>
           </div>
+          {images.length > 0 && (
+            <div className="mb-3 grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {images.map((im, i) => (
+                <div key={im.key} className="group relative aspect-[4/5] overflow-hidden rounded-lg border border-line">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={im.url} alt={`Product photo ${i + 1}`} className="h-full w-full object-cover" />
+                  {i === 0 && <span className="absolute top-1 left-1 rounded bg-bg/80 px-1.5 py-0.5 text-[10px]">Cover</span>}
+                  <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-gradient-to-t from-bg/90 to-transparent p-1 opacity-100 sm:opacity-0 sm:transition sm:group-hover:opacity-100">
+                    {i > 0 ? <button type="button" onClick={() => makeFirst(i)} className="rounded bg-bg/80 px-1.5 py-0.5 text-[10px]">Cover</button> : <span />}
+                    <button type="button" onClick={() => removePhoto(i)} aria-label="Remove photo" className="rounded bg-bg/80 p-0.5 text-loss"><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <PhotoIntake onCropped={addPhoto} enabled={open} />
         </div>
 
         <div className="flex items-center justify-between gap-3">

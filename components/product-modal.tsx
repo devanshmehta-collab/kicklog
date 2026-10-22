@@ -54,7 +54,7 @@ export function ProductModal({ p, whatsapp, onClose }: { p: PublicProduct; whats
 
         {/* gallery */}
         <div className="bg-raised md:sticky md:top-0 md:self-start">
-          <div className="relative aspect-square overflow-hidden md:aspect-[4/5]">
+          <div className="relative aspect-[4/5] overflow-hidden">
             {p.images[img] ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={p.images[img]} alt={`${p.name} photo ${img + 1}`} className="h-full w-full object-cover" />

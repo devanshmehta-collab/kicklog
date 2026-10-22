@@ -9,6 +9,7 @@ import { ApiError, apiFetch, useGet } from "@/lib/client/api";
 import { rupeesToPaise } from "@/lib/money";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ProductLite } from "@/components/product-forms";
+import { ProductPhotosDialog } from "@/components/product-photos";
 
 interface Row extends ProductLite {
   units: number;
@@ -23,6 +24,7 @@ export default function CatalogManager() {
   const qc = useQueryClient();
   const [err, setErr] = React.useState("");
   const [copied, setCopied] = React.useState("");
+  const [photos, setPhotos] = React.useState<{ id: string; name: string } | null>(null);
 
   async function patch(id: string, body: Record<string, unknown>) {
     setErr("");
@@ -31,17 +33,6 @@ export default function CatalogManager() {
       await qc.invalidateQueries();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed");
-    }
-  }
-  async function upload(id: string, f: File | undefined) {
-    if (!f) return;
-    const fd = new FormData();
-    fd.set("file", f);
-    try {
-      await apiFetch(`/api/products/${id}/images`, { method: "POST", body: fd });
-      await qc.invalidateQueries();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Upload failed");
     }
   }
   const live = (products.data ?? []).filter((p) => p.status === "published" && p.units > 0).length;
@@ -79,9 +70,7 @@ export default function CatalogManager() {
                   <Button size="sm" variant={p.status === "published" ? "secondary" : "primary"} onClick={() => patch(p.id, { status: p.status === "published" ? "draft" : "published" })}>
                     {p.status === "published" ? "Unpublish" : "Publish"}
                   </Button>
-                  <label className="inline-flex h-8 cursor-pointer items-center rounded-xl border border-line px-3 text-sm text-muted hover:text-fg">
-                    + Photo<input type="file" accept="image/*" className="hidden" onChange={(e) => upload(p.id, e.target.files?.[0])} />
-                  </label>
+                  <Button size="sm" variant="secondary" onClick={() => setPhotos({ id: p.id, name: p.name })}>Photos</Button>
                   {p.status === "published" && (
                     <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard?.writeText(`${location.origin}/shop/${p.id}`); setCopied(p.id); setTimeout(() => setCopied(""), 1500); }}>
                       {copied === p.id ? <Check size={14} /> : <Copy size={14} />} Link
@@ -94,6 +83,7 @@ export default function CatalogManager() {
         ))}
       </div>
       {products.data?.length === 0 && <Card><Empty>Add products in Inventory first.</Empty></Card>}
+      <ProductPhotosDialog product={photos} onClose={() => setPhotos(null)} />
     </div>
   );
 }

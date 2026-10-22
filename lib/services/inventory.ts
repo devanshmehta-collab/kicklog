@@ -396,3 +396,28 @@ export async function getProductDetail(db: DB, productId: string) {
     : [];
   return { product, images, variants, lots };
 }
+
+/** Make one photo the main (first) photo of a product. */
+export async function setPrimaryImage(db: DB, productId: string, imageId: string) {
+  return db.transaction(async (tx) => {
+    const [img] = await tx.select().from(productImages).where(and(eq(productImages.id, imageId), eq(productImages.productId, productId)));
+    if (!img) throw notFound("Photo not found");
+    await tx.update(productImages).set({ isPrimary: false }).where(eq(productImages.productId, productId));
+    await tx.update(productImages).set({ isPrimary: true }).where(eq(productImages.id, imageId));
+    return { ok: true };
+  });
+}
+
+/** Remove a photo; if it was the main one, the next photo becomes main. */
+export async function deleteProductImage(db: DB, productId: string, imageId: string) {
+  return db.transaction(async (tx) => {
+    const [img] = await tx.select().from(productImages).where(and(eq(productImages.id, imageId), eq(productImages.productId, productId)));
+    if (!img) throw notFound("Photo not found");
+    await tx.delete(productImages).where(eq(productImages.id, imageId));
+    if (img.isPrimary) {
+      const [next] = await tx.select().from(productImages).where(eq(productImages.productId, productId)).orderBy(asc(productImages.position)).limit(1);
+      if (next) await tx.update(productImages).set({ isPrimary: true }).where(eq(productImages.id, next.id));
+    }
+    return { ok: true };
+  });
+}
