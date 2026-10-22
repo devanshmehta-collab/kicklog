@@ -274,7 +274,7 @@ export function PhotoIntake({ onCropped, enabled = true, className, multiple = t
           <Button type="button" variant="secondary" size="sm" onClick={() => input.current?.click()}><ImagePlus size={15} /> Choose photos</Button>
           <Button type="button" variant="secondary" size="sm" onClick={pasteButton}><ClipboardPaste size={15} /> Paste from clipboard</Button>
         </div>
-        <p className="text-xs text-muted">…or drag photos here, or just press <kbd className="rounded border border-line px-1">Ctrl</kbd>+<kbd className="rounded border border-line px-1">V</kbd> to paste a copied picture or screenshot</p>
+        <p className="hidden text-xs text-muted sm:block">…or drag photos here, or just press <kbd className="rounded border border-line px-1">Ctrl</kbd>+<kbd className="rounded border border-line px-1">V</kbd> to paste a copied picture or screenshot</p>
         <input ref={input} type="file" accept="image/*" multiple={multiple} className="hidden" onChange={(e) => { add(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
       </div>
       {msg && <p role="alert" className="mt-2 text-xs text-review">{msg}</p>}

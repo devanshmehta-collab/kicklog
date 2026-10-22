@@ -54,10 +54,10 @@ export function ProductModal({ p, whatsapp, onClose }: { p: PublicProduct; whats
 
         {/* gallery */}
         <div className="bg-raised md:sticky md:top-0 md:self-start">
-          <div className="relative aspect-[4/5] overflow-hidden">
+          <div className="relative aspect-[4/5] overflow-hidden max-md:aspect-auto max-md:h-[38dvh]">
             {p.images[img] ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.images[img]} alt={`${p.name} photo ${img + 1}`} className="h-full w-full object-cover" />
+              <img src={p.images[img]} alt={`${p.name} photo ${img + 1}`} className="h-full w-full object-cover max-md:object-contain" />
             ) : (
               <div className="grain flex h-full items-center justify-center text-xs tracking-widest text-muted uppercase">Photo soon</div>
             )}
@@ -145,9 +145,12 @@ export function ProductModal({ p, whatsapp, onClose }: { p: PublicProduct; whats
             <dd className="capitalize">{p.condition}</dd>
           </dl>
 
-          <button onClick={buy} className="mt-auto inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] text-base font-semibold text-black transition hover:brightness-110 active:scale-[0.99]">
-            <MessageCircle size={20} /> Buy on WhatsApp
-          </button>
+          {/* on phones the Buy button stays pinned to the bottom of the sheet so it is always reachable */}
+          <div className="mt-auto max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-6 max-md:-mb-6 max-md:border-t max-md:border-line max-md:bg-surface/95 max-md:p-4 max-md:backdrop-blur sm:max-md:-mx-8 sm:max-md:-mb-8">
+            <button onClick={buy} className="inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] text-base font-semibold text-black transition hover:brightness-110 active:scale-[0.99]">
+              <MessageCircle size={20} /> Buy on WhatsApp
+            </button>
+          </div>
         </div>
       </div>
     </div>
