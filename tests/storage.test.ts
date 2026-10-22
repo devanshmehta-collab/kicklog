@@ -37,7 +37,7 @@ describe("storage driver selection", () => {
   it("explains what is missing on Vercel", () => {
     expect(storageProblem({ VERCEL: "1" })).toMatch(/Storage → Create → Blob/);
     expect(storageProblem({ VERCEL: "1", BLOB_READ_WRITE_TOKEN: "t" })).toBeNull();
-    expect(storageProblem({ STORAGE_DRIVER: "blob" })).toMatch(/BLOB_READ_WRITE_TOKEN is missing/);
+    expect(storageProblem({ STORAGE_DRIVER: "blob" })).toMatch(/no Blob credentials were found/);
     expect(storageProblem({})).toBeNull(); // local dev is fine
   });
 });
