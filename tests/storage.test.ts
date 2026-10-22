@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { put, get } = vi.hoisted(() => ({ put: vi.fn(), get: vi.fn() }));
 vi.mock("@vercel/blob", () => ({ put, get }));
 
-import { readImage, saveImage, storageDriver, storageProblem } from "@/lib/storage";
+import { blobAuth, readImage, saveImage, storageDriver, storageProblem } from "@/lib/storage";
 
 const PNG = Buffer.from("89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000001e221bc330000000049454e44ae426082", "hex");
 const ENV_KEYS = ["STORAGE_DRIVER", "BLOB_READ_WRITE_TOKEN", "S3_BUCKET", "VERCEL"] as const;
@@ -25,6 +25,14 @@ describe("storage driver selection", () => {
   it("finds a Blob token even when the variable has a custom prefix", () => {
     expect(storageDriver({ PHOTOS_READ_WRITE_TOKEN: "vercel_blob_rw_abc_123" })).toBe("blob");
     expect(storageDriver({ SOMETHING_ELSE: "not-a-token" })).toBe("local");
+  });
+  it("uses Vercel identity + store id when there is no token (newer Blob stores)", () => {
+    const env = { BLOB_READ_WRITE_TOKEN_STORE_ID: "store_abc", BLOB_READ_WRITE_TOKEN_WEBHOOK_PUBLIC_KEY: "key" };
+    expect(storageDriver(env)).toBe("blob");
+    expect(blobAuth(env)).toEqual({ storeId: "store_abc" });
+    expect(blobAuth({ BLOB_STORE_ID: "s1" })).toEqual({ storeId: "s1" });
+    expect(blobAuth({ BLOB_READ_WRITE_TOKEN: "t", BLOB_STORE_ID: "s1" })).toEqual({ token: "t" });
+    expect(blobAuth({})).toBeNull();
   });
   it("explains what is missing on Vercel", () => {
     expect(storageProblem({ VERCEL: "1" })).toMatch(/Storage → Create → Blob/);
@@ -72,6 +80,18 @@ describe("Vercel Blob storage", () => {
     await expect(saveImage(Buffer.from("<html>"), "product")).rejects.toMatchObject({ status: 400 });
     await expect(saveImage(Buffer.alloc(9 * 1024 * 1024), "product")).rejects.toMatchObject({ status: 400 });
     expect(put).not.toHaveBeenCalled();
+  });
+});
+
+describe("Vercel Blob with identity auth (no token)", () => {
+  it("passes the store id to the SDK instead of a token", async () => {
+    process.env.BLOB_READ_WRITE_TOKEN_STORE_ID = "store_abc";
+    put.mockResolvedValue({ url: "https://x" });
+    await saveImage(PNG, "product");
+    const opts = put.mock.calls[0][2];
+    expect(opts.storeId).toBe("store_abc");
+    expect(opts.token).toBeUndefined();
+    delete process.env.BLOB_READ_WRITE_TOKEN_STORE_ID;
   });
 });
 
