@@ -28,7 +28,14 @@ export async function apiFetch<T = unknown>(url: string, init: RequestInit & { j
   if (init.method && init.method !== "GET" && csrf) headers.set("x-csrf-token", csrf);
   const res = await fetch(url, { ...init, headers, body, credentials: "same-origin" });
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    // Not JSON: usually a platform error page (timeout, crash). Say what happened instead of a generic failure.
+    if (!res.ok) throw new ApiError(res.status, "bad_response", res.status === 504 || res.status === 408 ? "The server took too long to answer (timeout). Please try again." : `The server returned an error (${res.status}). Check the deployment logs.`);
+    throw new ApiError(res.status, "bad_response", "The server sent an unreadable response.");
+  }
   if (!res.ok) {
     throw new ApiError(res.status, data?.error?.code ?? "error", data?.error?.message ?? res.statusText, data?.error?.details);
   }

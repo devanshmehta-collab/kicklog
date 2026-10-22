@@ -35,7 +35,7 @@ export default function ImportPage() {
         retail: x.retail_price_inr != null ? String(x.retail_price_inr) : "", price: "", market: x.market_price_inr != null ? String(x.market_price_inr) : "", sizes: x.sizes.join(", "),
       });
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Import failed");
+      setError(e instanceof Error && e.message ? e.message : "Import failed");
     } finally {
       setBusy(false);
     }
