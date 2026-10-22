@@ -14,7 +14,7 @@ export async function createDb(opts: { url?: string; pgliteDir?: string } = {}):
     const { Pool } = await import("pg");
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const { migrate } = await import("drizzle-orm/node-postgres/migrator");
-    const pool = new Pool({ connectionString: opts.url, max: 10 });
+    const pool = new Pool({ connectionString: opts.url, max: process.env.VERCEL ? 3 : 10 });
     const db = drizzle(pool, { schema });
     await migrate(db, { migrationsFolder: MIGRATIONS });
     return { db: db as unknown as DB, close: () => pool.end() };
@@ -35,6 +35,10 @@ const g = globalThis as unknown as { __kicklogDb?: Promise<DB> };
 export function getDb(): Promise<DB> {
   if (!g.__kicklogDb) {
     const url = process.env.DATABASE_URL?.trim();
+    if (!url && (process.env.VERCEL || process.env.NODE_ENV === "production") && !process.env.PGLITE_DIR) {
+      // Serverless hosts have a read-only, non-persistent filesystem: the embedded dev database cannot work there.
+      throw new Error("DATABASE_URL is not set. Production needs a hosted PostgreSQL (Neon, Supabase, Vercel Postgres…) — add DATABASE_URL in your host's environment variables.");
+    }
     g.__kicklogDb = createDb(
       url ? { url } : { pgliteDir: process.env.PGLITE_DIR || path.join(process.cwd(), ".data", "pglite") },
     ).then((r) => r.db);

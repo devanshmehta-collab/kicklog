@@ -27,6 +27,7 @@ export async function saveImage(data: Buffer, kind: "product" | "bill"): Promise
     const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
     await s3(S3Client).send(new PutObjectCommand({ Bucket: process.env.S3_BUCKET!, Key: key, Body: data, ContentType: type }));
   } else {
+    if (process.env.VERCEL) throw badRequest("Image storage is not configured. Set STORAGE_DRIVER=s3 and the S3_* variables (Vercel has no writable disk).");
     await fs.mkdir(UPLOAD_DIR(), { recursive: true });
     await fs.writeFile(path.join(UPLOAD_DIR(), key), data);
   }

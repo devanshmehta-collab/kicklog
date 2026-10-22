@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite", "pg", "bcryptjs"],
   poweredByHeader: false,
+  // SQL migrations are read from disk at runtime; make sure serverless bundles ship them.
+  outputFileTracingIncludes: { "/*": ["./drizzle/**/*"] },
   async headers() {
     return [
       {

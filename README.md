@@ -117,3 +117,17 @@ Verified in this repo: all unit/integration/UI tests, the Playwright e2e suite (
 
 **Not verified (no credentials/infrastructure were available):** real Claude calls (prompt quality, latency and the < 10 s target with a live model), Gemini import against live sites, the node-postgres driver against a server PostgreSQL (same SQL and the same engine as PGlite, but not run), and the S3 storage driver.
 Before relying on it, run `node scripts/smoke.mjs` against a deployment with real keys and try the "bad input" cases with real photos.
+
+## Deploying to Vercel (checklist)
+
+Vercel's disk is read-only and temporary, so the embedded dev database and local `uploads/` folder **cannot work there**. A page showing "This page couldn't load / A server error occurred" right after deploying almost always means one of these is missing. Set them in *Project → Settings → Environment Variables*, then redeploy:
+
+| Variable | Why |
+| --- | --- |
+| `DATABASE_URL` | **Required.** A hosted PostgreSQL (Neon, Supabase, Vercel Postgres). Use the pooled connection string with `sslmode=require`. |
+| `ANTHROPIC_API_KEY` | Quick Log. Without it submissions are kept in Needs Review. |
+| `STORAGE_DRIVER=s3` + `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Required to upload product photos and bills (Cloudflare R2, S3, Supabase Storage all work). |
+| `OWNER_EMAIL`, `OWNER_PASSWORD` | Optional: creates the owner on first visit. Otherwise `/login` shows the setup form. |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Fallback WhatsApp number (also editable in Settings). |
+
+Tables are created automatically on the first request; or run `DATABASE_URL=... npm run db:migrate` once from your machine. Do **not** set `AI_MODE=mock` in production (it is ignored there). The actual error for any failing page is in *Vercel → Deployments → Functions/Runtime Logs*.
