@@ -46,6 +46,7 @@
     "@google/genai": "^2.30.0",
     "@hookform/resolvers": "^6.0.0",
     "@tanstack/react-query": "^5.104.5",
+    "@vercel/blob": "^2.8.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

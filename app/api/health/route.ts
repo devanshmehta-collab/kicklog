@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
+import { storageDriver, storageProblem } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +20,8 @@ export async function GET() {
   const env = {
     DATABASE_URL: !!process.env.DATABASE_URL?.trim(),
     ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
-    STORAGE_DRIVER: process.env.STORAGE_DRIVER || "local",
-    S3_BUCKET: !!process.env.S3_BUCKET,
+    storage: storageDriver(),
+    storageProblem: storageProblem(),
     onVercel: !!process.env.VERCEL,
   };
   try {

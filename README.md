@@ -50,7 +50,8 @@ See [`.env.example`](.env.example). Secrets (`ANTHROPIC_API_KEY`, `GEMINI_API_KE
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | AI Product Import (uses Gemini's URL-context tool). |
 | `AI_MODE` | `live` (default) or `mock` (dev/e2e only). |
 | `OWNER_EMAIL`, `OWNER_PASSWORD`, `OWNER_NAME` | Optional first-run owner. |
-| `STORAGE_DRIVER`, `S3_*` | `local` (`./uploads`) or any S3-compatible bucket. |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob storage (auto-detected). |
+| `STORAGE_DRIVER`, `S3_*` | Optional override: `blob`, `s3` (any S3-compatible bucket) or `local` (`./uploads`, dev only). |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Fallback WhatsApp number for the showroom (also editable in Settings). |
 
 ## How Quick Log decides
@@ -127,7 +128,7 @@ Vercel's disk is read-only and temporary, so the embedded dev database and local
 | --- | --- |
 | `DATABASE_URL` | **Required.** A hosted PostgreSQL (Neon, Supabase, Vercel Postgres). Use the pooled connection string with `sslmode=require`. |
 | `ANTHROPIC_API_KEY` | Quick Log. Without it submissions are kept in Needs Review. |
-| `STORAGE_DRIVER=s3` + `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Required to upload product photos and bills (Cloudflare R2, S3, Supabase Storage all work). |
+| **Image storage** — easiest: in Vercel open *Storage → Create → Blob* and connect it to the project (this adds `BLOB_READ_WRITE_TOKEN` automatically). Or use S3-style storage: `STORAGE_DRIVER=s3` + `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Required to upload product photos and bills. Vercel has no writable disk. |
 | `OWNER_EMAIL`, `OWNER_PASSWORD` | Optional: creates the owner on first visit. Otherwise `/login` shows the setup form. |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Fallback WhatsApp number (also editable in Settings). |
 
