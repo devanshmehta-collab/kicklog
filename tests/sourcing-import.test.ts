@@ -11,28 +11,30 @@ import { key, testDb } from "./helpers";
 let db: DB, userId: string, close: () => Promise<void>;
 beforeAll(async () => ({ db, userId, close } = await testDb()));
 afterAll(() => close());
-const HOSTS = ["stockx.com", "goat.com", "nike.com", "farfetch.com"];
 
-describe("product URL import validation", () => {
+describe("product URL import validation (any public website)", () => {
   it.each([
     "https://stockx.com/air-jordan-1",
     "https://www.nike.com/t/air-jordan-1/DZ5485-612",
-    "https://www.farfetch.com/shopping/men/item.aspx",
-    "https://goat.com/sneakers/x",
-  ])("accepts %s", (u) => expect(() => validateImportUrl(u, HOSTS)).not.toThrow());
+    "https://some-small-shop.in/products/dunk-low",
+    "http://old-shop.example.com/item?id=4",
+  ])("accepts %s", (u) => expect(() => validateImportUrl(u)).not.toThrow());
 
   it.each([
-    "http://stockx.com/x", // not https
-    "https://evil.com/stockx.com",
-    "https://stockx.com.evil.com/x", // look-alike host
     "https://127.0.0.1/x",
     "https://localhost/x",
+    "https://[::1]/x",
+    "https://10.0.0.5/admin",
+    "https://192.168.1.1/",
     "https://169.254.169.254/latest/meta-data",
-    "https://user:pass@stockx.com/x",
-    "https://stockx.com:8443/x",
+    "https://user:pass@example.com/x",
+    "https://intranet.local/x",
+    "https://internalhost/x",
     "javascript:alert(1)",
+    "file:///etc/passwd",
+    "ftp://example.com/x",
     "not a url",
-  ])("rejects %s", (u) => expect(() => validateImportUrl(u, HOSTS)).toThrow());
+  ])("rejects %s", (u) => expect(() => validateImportUrl(u)).toThrow());
 });
 
 describe("product import flow", () => {
@@ -50,9 +52,9 @@ describe("product import flow", () => {
     expect(rows.some((r) => r.status === "failed")).toBe(true);
   });
 
-  it("rejects unsupported sites before calling the extractor", async () => {
+  it("rejects private addresses before calling the extractor", async () => {
     let called = false;
-    await expect(extractProduct(db, "https://evil.com/x", userId, async () => { called = true; return {}; })).rejects.toMatchObject({ status: 400 });
+    await expect(extractProduct(db, "https://169.254.169.254/latest", userId, async () => { called = true; return {}; })).rejects.toMatchObject({ status: 400 });
     expect(called).toBe(false);
   });
 

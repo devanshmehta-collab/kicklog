@@ -8,7 +8,6 @@ export const SettingsSchema = z.object({
   phone: z.string().trim().max(30).default(""),
   lowStockThreshold: z.number().int().min(0).max(100).default(1),
   slowMovingDays: z.number().int().min(7).max(720).default(60),
-  importAllowedHosts: z.array(z.string().trim().toLowerCase()).default(["stockx.com", "goat.com", "nike.com", "farfetch.com"]),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 
