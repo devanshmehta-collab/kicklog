@@ -57,12 +57,22 @@ export const geminiExtractor: Extractor = async (url) => {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new AppError(503, "ai_unconfigured", "GEMINI_API_KEY is not configured on the server");
   const ai = new GoogleGenAI({ apiKey: key });
-  const res = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
-    contents: PROMPT(url),
-    config: { tools: [{ urlContext: {} }] },
-  });
-  const text = (res.text ?? "").trim();
+  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  // Google answers 503/429 during demand spikes; those are temporary, so retry with a short backoff.
+  let res: Awaited<ReturnType<typeof ai.models.generateContent>> | undefined;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      res = await ai.models.generateContent({ model, contents: PROMPT(url), config: { tools: [{ urlContext: {} }] } });
+      break;
+    } catch (e) {
+      const err = e as { status?: number | string; message?: string };
+      const busy = err.status === 503 || err.status === 429 || err.status === "UNAVAILABLE" || /"code":\s*(503|429)|UNAVAILABLE|high demand/i.test(err.message ?? "");
+      if (!busy) throw new AppError(502, "ai_error", `Gemini request failed: ${(err.message ?? "unknown error").slice(0, 200)}`);
+      if (attempt === 3) throw new AppError(503, "ai_busy", "Google's AI is overloaded right now. Please try again in a minute.");
+      await new Promise((r) => setTimeout(r, 1500 * 2 ** attempt)); // 1.5s, 3s, 6s
+    }
+  }
+  const text = (res?.text ?? "").trim();
   const json = text.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
   try {
     return JSON.parse(json.slice(json.indexOf("{"), json.lastIndexOf("}") + 1));
