@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { storageDriver, storageProblem } from "@/lib/storage";
+import { blobToken, storageDriver, storageProblem } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +21,9 @@ export async function GET() {
     DATABASE_URL: !!process.env.DATABASE_URL?.trim(),
     ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
     storage: storageDriver(),
+    blobTokenFound: !!blobToken(),
+    // names only (never values) of variables that look storage-related, to spot a mis-named or missing one
+    storageVariables: Object.keys(process.env).filter((k) => /blob|s3_|storage/i.test(k)).sort(),
     storageProblem: storageProblem(),
     onVercel: !!process.env.VERCEL,
   };

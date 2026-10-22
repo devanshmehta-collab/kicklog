@@ -22,6 +22,10 @@ describe("storage driver selection", () => {
     expect(storageDriver({ BLOB_READ_WRITE_TOKEN: "t", S3_BUCKET: "b" })).toBe("blob");
     expect(storageDriver({ BLOB_READ_WRITE_TOKEN: "t", STORAGE_DRIVER: "s3" })).toBe("s3");
   });
+  it("finds a Blob token even when the variable has a custom prefix", () => {
+    expect(storageDriver({ PHOTOS_READ_WRITE_TOKEN: "vercel_blob_rw_abc_123" })).toBe("blob");
+    expect(storageDriver({ SOMETHING_ELSE: "not-a-token" })).toBe("local");
+  });
   it("explains what is missing on Vercel", () => {
     expect(storageProblem({ VERCEL: "1" })).toMatch(/Storage → Create → Blob/);
     expect(storageProblem({ VERCEL: "1", BLOB_READ_WRITE_TOKEN: "t" })).toBeNull();

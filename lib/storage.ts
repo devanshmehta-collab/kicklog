@@ -21,6 +21,15 @@ export function isSafeKey(key: string) {
 export type StorageDriver = "blob" | "s3" | "local";
 
 /**
+ * Vercel normally names the variable BLOB_READ_WRITE_TOKEN, but when a store is connected with a custom prefix
+ * it becomes e.g. PHOTOS_READ_WRITE_TOKEN. Every Blob token starts with "vercel_blob_rw_", so find it by value.
+ */
+export function blobToken(env: Record<string, string | undefined> = process.env): string | undefined {
+  if (env.BLOB_READ_WRITE_TOKEN) return env.BLOB_READ_WRITE_TOKEN;
+  return Object.values(env).find((v) => typeof v === "string" && v.startsWith("vercel_blob_rw_"));
+}
+
+/**
  * Which backend holds uploads:
  *   STORAGE_DRIVER=blob|s3|local wins; otherwise Vercel Blob when BLOB_READ_WRITE_TOKEN exists;
  *   otherwise S3 when S3_BUCKET exists; otherwise the local ./uploads folder (dev only).
@@ -28,16 +37,16 @@ export type StorageDriver = "blob" | "s3" | "local";
 export function storageDriver(env: Record<string, string | undefined> = process.env): StorageDriver {
   const forced = env.STORAGE_DRIVER?.toLowerCase();
   if (forced === "blob" || forced === "s3" || forced === "local") return forced;
-  if (env.BLOB_READ_WRITE_TOKEN) return "blob";
+  if (blobToken(env)) return "blob";
   if (env.S3_BUCKET) return "s3";
   return "local";
 }
 
 export function storageProblem(env: Record<string, string | undefined> = process.env): string | null {
   const d = storageDriver(env);
-  if (d === "blob" && !env.BLOB_READ_WRITE_TOKEN) return "STORAGE_DRIVER=blob but BLOB_READ_WRITE_TOKEN is missing. In Vercel: Storage → Create → Blob, then connect it to this project.";
+  if (d === "blob" && !blobToken(env)) return "STORAGE_DRIVER=blob but BLOB_READ_WRITE_TOKEN is missing. In Vercel: Storage → Create → Blob, then connect it to this project.";
   if (d === "s3" && !env.S3_BUCKET) return "STORAGE_DRIVER=s3 but S3_BUCKET is missing.";
-  if (d === "local" && env.VERCEL) return "No image storage is set up. In Vercel open Storage → Create → Blob and connect it to this project (it adds BLOB_READ_WRITE_TOKEN), then redeploy.";
+  if (d === "local" && env.VERCEL) return "No image storage is set up. In Vercel open Storage → Create → Blob and connect it to this project (it adds BLOB_READ_WRITE_TOKEN) and tick the Production environment, then redeploy.";
   return null;
 }
 
@@ -47,7 +56,7 @@ let blobAccess: "public" | "private" = "public";
 
 async function blobPut(key: string, data: Buffer, contentType: string) {
   const { put } = await import("@vercel/blob");
-  const opts = (access: "public" | "private") => ({ access, contentType, addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 31536000 }) as Parameters<typeof put>[2];
+  const opts = (access: "public" | "private") => ({ access, token: blobToken(), contentType, addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 31536000 }) as Parameters<typeof put>[2];
   try {
     await put(key, data, opts(blobAccess));
   } catch (e) {
@@ -65,7 +74,7 @@ async function blobRead(key: string): Promise<Buffer | null> {
   const { get } = await import("@vercel/blob");
   for (const access of [blobAccess, blobAccess === "public" ? "private" : "public"] as const) {
     try {
-      const r = await get(key, { access });
+      const r = await get(key, { access, token: blobToken() });
       if (r && r.statusCode === 200) return Buffer.from(await new Response(r.stream).arrayBuffer());
     } catch {
       // try the other access mode
