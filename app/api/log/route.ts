@@ -2,6 +2,7 @@ import { z } from "zod";
 import { api } from "@/lib/api";
 import { WRITE } from "@/lib/auth";
 import { interpretWithClaude, type InterpretImage, type Interpreter } from "@/lib/ai/client";
+import { interpretWithGemini } from "@/lib/ai/gemini";
 import { mockInterpreter } from "@/lib/ai/mock";
 import { badRequest } from "@/lib/errors";
 import { MAX_IMAGES_PER_LOG } from "@/lib/image";
@@ -10,8 +11,13 @@ import { saveImage } from "@/lib/storage";
 
 export const maxDuration = 60;
 
+/** AI_PROVIDER=anthropic|gemini wins; otherwise Claude if its key is set, else Gemini. */
 function pickInterpreter(): Interpreter {
-  return process.env.AI_MODE === "mock" && process.env.NODE_ENV !== "production" ? mockInterpreter : interpretWithClaude;
+  if (process.env.AI_MODE === "mock" && process.env.NODE_ENV !== "production") return mockInterpreter;
+  const forced = process.env.AI_PROVIDER?.toLowerCase();
+  if (forced === "gemini") return interpretWithGemini;
+  if (forced === "anthropic") return interpretWithClaude;
+  return process.env.ANTHROPIC_API_KEY ? interpretWithClaude : interpretWithGemini;
 }
 
 /**

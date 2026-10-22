@@ -45,7 +45,8 @@ See [`.env.example`](.env.example). Secrets (`ANTHROPIC_API_KEY`, `GEMINI_API_KE
 | Variable | Purpose |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string. Omit for embedded PGlite (dev). |
-| `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | Quick Log interpretation. Default model `claude-sonnet-5-5`; pick a smaller/faster model if latency matters. |
+| `AI_PROVIDER` | Optional: `anthropic` or `gemini`. By default Quick Log uses Claude when `ANTHROPIC_API_KEY` is set, otherwise Gemini. |
+| `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | Quick Log interpretation with Claude (paid API). Default model `claude-sonnet-5-5`; pick a smaller/faster model if latency matters. |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | AI Product Import (uses Gemini's URL-context tool). |
 | `AI_MODE` | `live` (default) or `mock` (dev/e2e only). |
 | `OWNER_EMAIL`, `OWNER_PASSWORD`, `OWNER_NAME` | Optional first-run owner. |
