@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 11 11 12;
+  --surface: 20 20 22;
+  --raised: 29 29 32;
+  --line: 44 44 49;
+  --fg: 242 240 235;
+  --muted: 142 142 150;
+  --gain: 94 214 140;
+  --loss: 244 112 103;
+  --review: 250 204 21;
+  --accent: 212 179 106;
+  color-scheme: dark;
+}
+
+html { background: rgb(var(--bg)); }
+body { @apply bg-bg text-fg font-sans antialiased; font-feature-settings: "tnum"; }
+* { @apply border-line; }
+::selection { background: rgb(var(--fg) / 0.2); }
+input, textarea, select { @apply outline-none; }
+:focus-visible { @apply ring-2 ring-fg/40 ring-offset-2 ring-offset-bg; }
+.num { font-variant-numeric: tabular-nums; }
+.scroll-thin::-webkit-scrollbar { height: 6px; width: 6px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: rgb(var(--line)); border-radius: 9px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* Grid children may shrink below their content width, so wide tables scroll inside their card instead of the page. */
+.grid > * { min-width: 0; }
+
+.display { letter-spacing: -0.035em; line-height: 0.95; font-weight: 600; }
+.eyebrow { @apply text-[11px] font-medium tracking-[0.22em] uppercase text-accent; }
+.hairline { background: linear-gradient(90deg, transparent, rgb(var(--line)), transparent); height: 1px; }
+.grain { background-image: radial-gradient(rgb(var(--fg) / 0.05) 1px, transparent 1px); background-size: 22px 22px; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .5s cubic-bezier(.2,.7,.2,1) both; }
