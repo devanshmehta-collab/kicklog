@@ -58,7 +58,7 @@ export const geminiExtractor: Extractor = async (url) => {
   if (!key) throw new AppError(503, "ai_unconfigured", "GEMINI_API_KEY is not configured on the server");
   const ai = new GoogleGenAI({ apiKey: key });
   const res = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
     contents: PROMPT(url),
     config: { tools: [{ urlContext: {} }] },
   });
