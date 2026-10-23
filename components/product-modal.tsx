@@ -29,21 +29,18 @@ export function ProductModal({ p, whatsapp, onClose }: { p: PublicProduct; whats
     };
   }, [onClose, go]);
 
-  function buy() {
-    if (p.sizes.length > 1 && !size) {
-      setHint(true);
-      return;
-    }
+  const needsSize = p.sizes.length > 1 && !size;
+  // A real link (not window.open): browsers never block it as a popup, and it opens the WhatsApp app on phones.
+  const buyUrl = (() => {
     const text = [
       `Hi! I want to buy ${p.name}${size ? ` (size ${size})` : ""} — ${formatINR(p.pricePaise)}`,
       p.sku ? `SKU: ${p.sku}` : null,
-      `${location.origin}/shop/${p.id}`,
+      `${typeof location === "undefined" ? "" : location.origin}/shop/${p.id}`,
     ]
       .filter(Boolean)
       .join("\n");
-    const url = whatsapp ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}` : `/shop/${p.id}`;
-    window.open(url, "_blank", "noopener");
-  }
+    return whatsapp ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}` : `/shop/${p.id}`;
+  })();
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center sm:p-6" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -147,9 +144,20 @@ export function ProductModal({ p, whatsapp, onClose }: { p: PublicProduct; whats
 
           {/* on phones the Buy button stays pinned to the bottom of the sheet so it is always reachable */}
           <div className="mt-auto max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-6 max-md:-mb-6 max-md:border-t max-md:border-line max-md:bg-surface/95 max-md:p-4 max-md:backdrop-blur sm:max-md:-mx-8 sm:max-md:-mb-8">
-            <button onClick={buy} className="inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] text-base font-semibold text-black transition hover:brightness-110 active:scale-[0.99]">
+            <a
+              href={buyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                if (needsSize) {
+                  e.preventDefault();
+                  setHint(true);
+                }
+              }}
+              className="inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] text-base font-semibold text-black transition hover:brightness-110 active:scale-[0.99]"
+            >
               <MessageCircle size={20} /> Buy on WhatsApp
-            </button>
+            </a>
           </div>
         </div>
       </div>
