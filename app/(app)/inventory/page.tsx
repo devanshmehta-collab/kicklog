@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Eye, EyeOff, Layers, PackagePlus, Pencil, Plus, Search } from "lucide-react";
+import { Archive, Layers, PackagePlus, Pencil, Plus, Search } from "lucide-react";
 import * as React from "react";
 import { AddProductDialog, EditProductDialog, RestockDialog, type ProductLite } from "@/components/product-forms";
 import { canWrite, useMe } from "@/components/providers";
@@ -30,6 +30,8 @@ export default function InventoryPage() {
   const products = useGet<Row[]>(["products"], "/api/products");
   const qc = useQueryClient();
   const [err, setErr] = React.useState("");
+  const [notice, setNotice] = React.useState("");
+  const [busyId, setBusyId] = React.useState("");
 
   const rows = (products.data ?? []).filter(
     (p) =>
@@ -40,11 +42,27 @@ export default function InventoryPage() {
 
   async function setStatusFor(p: Row, s: string) {
     setErr("");
+    setNotice("");
+    setBusyId(p.id);
     try {
       await apiFetch(`/api/products/${p.id}`, { method: "PATCH", json: { status: s } });
       await qc.invalidateQueries();
+      if (s === "published") {
+        setNotice(
+          p.units > 0
+            ? `"${p.name}" is now live on your website.`
+            : `"${p.name}" is published, but customers won't see it until it has stock. Use Restock to add units.`,
+        );
+      } else if (s === "draft") setNotice(`"${p.name}" is hidden from your website.`);
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed");
+      const msg = e instanceof ApiError ? e.message : "Failed";
+      if (/public price/i.test(msg)) {
+        // the one thing blocking publishing is the price: take them straight to where it is set
+        setEdit(p);
+        setNotice(`Add a public price for "${p.name}", save, then press Publish.`);
+      } else setErr(msg);
+    } finally {
+      setBusyId("");
     }
   }
 
@@ -68,6 +86,7 @@ export default function InventoryPage() {
         </Select>
       </div>
       {err && <p role="alert" className="text-sm text-loss">{err}</p>}
+      {notice && <p role="status" className="rounded-lg border border-gain/30 bg-gain/10 px-3 py-2 text-sm">{notice}</p>}
       <Card>
         <Table>
           <thead><tr><Th>Product</Th><Th>Sizes in stock</Th><Th className="text-right">Units</Th><Th className="text-right">Public price</Th><Th>Status</Th><Th /></tr></thead>
@@ -91,7 +110,20 @@ export default function InventoryPage() {
                 <Td className="max-w-[200px] text-muted">{p.sizes.join(", ") || "—"}</Td>
                 <Td className="text-right num">{p.units}</Td>
                 <Td className="text-right"><Money paise={p.publicPricePaise} /></Td>
-                <Td><Badge tone={p.status === "published" ? "gain" : "neutral"}>{p.status}</Badge></Td>
+                <Td>
+                  <div className="flex flex-col items-start gap-1.5">
+                    <Badge tone={p.status === "published" ? "gain" : "neutral"}>{p.status}</Badge>
+                    {write && p.status === "draft" && (
+                      <Button size="sm" onClick={() => setStatusFor(p, "published")} disabled={busyId === p.id}>{busyId === p.id ? "Publishing…" : "Publish"}</Button>
+                    )}
+                    {write && p.status === "published" && (
+                      <Button size="sm" variant="secondary" onClick={() => setStatusFor(p, "draft")} disabled={busyId === p.id}>{busyId === p.id ? "Updating…" : "Unpublish"}</Button>
+                    )}
+                    {write && p.status === "archived" && (
+                      <Button size="sm" variant="secondary" onClick={() => setStatusFor(p, "draft")} disabled={busyId === p.id}>Restore</Button>
+                    )}
+                  </div>
+                </Td>
                 <Td>
                   <div className="flex justify-end gap-1">
                     <Button variant="ghost" size="icon" aria-label="Lots and stock" title="Lots & stock" onClick={() => setLots(p)}><Layers size={16} /></Button>
@@ -99,13 +131,6 @@ export default function InventoryPage() {
                       <>
                         <Button variant="ghost" size="icon" aria-label="Restock" title="Restock" onClick={() => setRestock(p)}><PackagePlus size={16} /></Button>
                         <Button variant="ghost" size="icon" aria-label="Edit" title="Edit" onClick={() => setEdit(p)}><Pencil size={16} /></Button>
-                        {p.status === "published" ? (
-                          <Button variant="ghost" size="icon" aria-label="Unpublish" title="Unpublish" onClick={() => setStatusFor(p, "draft")}><EyeOff size={16} /></Button>
-                        ) : p.status !== "archived" ? (
-                          <Button variant="ghost" size="icon" aria-label="Publish" title="Publish" onClick={() => setStatusFor(p, "published")}><Eye size={16} /></Button>
-                        ) : (
-                          <Button variant="ghost" size="icon" aria-label="Restore" title="Restore to draft" onClick={() => setStatusFor(p, "draft")}><Eye size={16} /></Button>
-                        )}
                         {p.status !== "archived" && <Button variant="ghost" size="icon" aria-label="Archive" title="Archive" onClick={() => setStatusFor(p, "archived")}><Archive size={16} /></Button>}
                       </>
                     )}
