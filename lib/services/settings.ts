@@ -16,6 +16,10 @@ export const SettingsSchema = z.object({
     }, z.string().regex(/^\d{8,15}$/, "Enter the number with country code, e.g. +91 98765 43210").or(z.literal("")))
     .default(DEFAULT_WHATSAPP_NUMBER),
   phone: z.string().trim().max(30).default(""),
+  /** Printed on invoices. */
+  address: z.string().trim().max(300).default(""),
+  gstin: z.string().trim().max(20).default(""),
+  invoiceNote: z.string().trim().max(300).default("Thank you for your purchase!"),
   lowStockThreshold: z.number().int().min(0).max(100).default(1),
   slowMovingDays: z.number().int().min(7).max(720).default(60),
 });

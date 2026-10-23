@@ -17,14 +17,14 @@ export default function SettingsPage() {
   const qc = useQueryClient();
   React.useEffect(() => {
     const s = settings.data;
-    if (s) setF({ businessName: s.businessName, whatsappNumber: s.whatsappNumber, phone: s.phone, lowStockThreshold: String(s.lowStockThreshold), slowMovingDays: String(s.slowMovingDays) });
+    if (s) setF({ businessName: s.businessName, whatsappNumber: s.whatsappNumber, phone: s.phone, lowStockThreshold: String(s.lowStockThreshold), slowMovingDays: String(s.slowMovingDays), address: s.address, gstin: s.gstin, invoiceNote: s.invoiceNote });
   }, [settings.data]);
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
 
   async function save() {
     setMsg("");
     try {
-      await apiFetch("/api/settings", { method: "PUT", json: { businessName: f.businessName, whatsappNumber: f.whatsappNumber, phone: f.phone, lowStockThreshold: Number(f.lowStockThreshold), slowMovingDays: Number(f.slowMovingDays) } });
+      await apiFetch("/api/settings", { method: "PUT", json: { businessName: f.businessName, whatsappNumber: f.whatsappNumber, phone: f.phone, lowStockThreshold: Number(f.lowStockThreshold), slowMovingDays: Number(f.slowMovingDays), address: f.address ?? "", gstin: f.gstin ?? "", invoiceNote: f.invoiceNote ?? "" } });
       await qc.invalidateQueries();
       setMsg("Saved");
     } catch (e) {
@@ -43,6 +43,9 @@ export default function SettingsPage() {
           <Field label="Phone (shown to customers)"><Input value={f.phone ?? ""} onChange={set("phone")} disabled={!owner} /></Field>
           <Field label="Low-stock threshold (units)"><Input value={f.lowStockThreshold ?? ""} onChange={set("lowStockThreshold")} inputMode="numeric" disabled={!owner} /></Field>
           <Field label="Slow-moving after (days)"><Input value={f.slowMovingDays ?? ""} onChange={set("slowMovingDays")} inputMode="numeric" disabled={!owner} /></Field>
+          <Field label="Business address (on invoices)" className="sm:col-span-2"><Input value={f.address ?? ""} onChange={set("address")} disabled={!owner} placeholder="Shop or home address customers should see" /></Field>
+          <Field label="GSTIN (optional)"><Input value={f.gstin ?? ""} onChange={set("gstin")} disabled={!owner} /></Field>
+          <Field label="Invoice footer note"><Input value={f.invoiceNote ?? ""} onChange={set("invoiceNote")} disabled={!owner} /></Field>
           {owner && <div className="flex items-center gap-3 sm:col-span-2"><Button onClick={save}>Save settings</Button>{msg && <span className="text-sm text-muted">{msg}</span>}</div>}
           {!owner && <p className="text-sm text-muted sm:col-span-2">Only the owner can change settings.</p>}
         </div>

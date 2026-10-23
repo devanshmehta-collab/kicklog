@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import * as React from "react";
+import { InvoiceButton } from "@/components/invoice-button";
 import { RefundDialog, type SaleLike } from "@/components/refund-dialog";
 import { canWrite, useMe } from "@/components/providers";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ export default function SalesPage() {
                 <Td className="text-right"><Money paise={s.netProceedsPaise - s.refundedPaise} /></Td>
                 <Td className="text-right"><Money paise={s.cogsPaise} /></Td>
                 <Td className="text-right"><Money paise={s.netProfitPaise} signed /></Td>
-                <Td className="text-right">{write && s.status !== "refunded" && <Button size="sm" variant="ghost" onClick={() => setRefund(s)}>Refund</Button>}</Td>
+                <Td className="text-right whitespace-nowrap"><InvoiceButton saleId={s.id} />{write && s.status !== "refunded" && <Button size="sm" variant="ghost" onClick={() => setRefund(s)}>Refund</Button>}</Td>
               </tr>
             ))}
           </tbody>

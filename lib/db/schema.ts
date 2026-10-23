@@ -276,6 +276,8 @@ export const sales = pgTable(
   "sales",
   {
     id: id(),
+    /** Sequential number shown on invoices (INV-0001…). Assigned by the database, never reused. */
+    invoiceSeq: integer("invoice_seq").generatedAlwaysAsIdentity(),
     customerId: uuid("customer_id").references(() => customers.id),
     channel: text("channel").notNull().default("whatsapp"),
     saleDate: timestamp("sale_date", { withTimezone: true }).notNull().defaultNow(),

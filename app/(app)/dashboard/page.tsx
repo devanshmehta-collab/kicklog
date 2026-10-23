@@ -4,6 +4,7 @@ import { Boxes, IndianRupee, PackageCheck, TrendingUp, type LucideIcon } from "l
 import Link from "next/link";
 import * as React from "react";
 import { Bars, Donut, TrendChart } from "@/components/charts";
+import { InvoiceButton } from "@/components/invoice-button";
 import { QuickLog } from "@/components/quick-log";
 import { RefundDialog, type SaleLike } from "@/components/refund-dialog";
 import { ReviewCards } from "@/components/review-cards";
@@ -114,7 +115,10 @@ export default function Overview() {
                   <Td className="text-right"><Money paise={s.netProceedsPaise - s.refundedPaise} /></Td>
                   <Td className="text-right"><Money paise={s.netProfitPaise} signed /></Td>
                   <Td className="text-right">
-                    {write && s.status !== "refunded" && <Button variant="ghost" size="sm" onClick={() => setRefund(s)}>Refund</Button>}
+                    <div className="flex justify-end">
+                      <InvoiceButton saleId={s.id} label="Invoice" className="px-2" />
+                      {write && s.status !== "refunded" && <Button variant="ghost" size="sm" onClick={() => setRefund(s)}>Refund</Button>}
+                    </div>
                   </Td>
                 </tr>
               ))}
