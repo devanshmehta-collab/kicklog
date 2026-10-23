@@ -4,7 +4,7 @@ import { DEFAULT_WHATSAPP_NUMBER } from "../config";
 import { businessSettings } from "../db/schema";
 
 export const SettingsSchema = z.object({
-  businessName: z.string().trim().max(80).default("Kick Log"),
+  businessName: z.string().trim().max(80).default("Hyped Stash"),
   /** Accepts "+91 98765 43210", "98765-43210" etc. Stored as digits with country code; a bare 10-digit number is treated as Indian (+91). */
   whatsappNumber: z
     .preprocess((v) => {

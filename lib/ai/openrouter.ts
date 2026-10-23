@@ -2,7 +2,7 @@ import { z } from "zod";
 import { AppError } from "../errors";
 
 /**
- * The ONLY place Kick Log talks to an AI provider.
+ * The ONLY place Hyped Stash talks to an AI provider.
  * Everything goes through OpenRouter, to Google models, pinned to Google's own endpoints.
  * Server-side only: the key is read from the environment and never logged or returned.
  */
@@ -113,7 +113,7 @@ export async function chat(opts: ChatOptions): Promise<ChatResult> {
         headers: {
           Authorization: `Bearer ${cfg.apiKey}`,
           "Content-Type": "application/json",
-          "X-Title": "Kick Log",
+          "X-Title": "Hyped Stash",
         },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(opts.timeoutMs ?? 45_000),

@@ -11,7 +11,7 @@ export interface PromptStockRow {
 
 export const TOOL_NAME = "record_transaction";
 
-export const SYSTEM_PROMPT = `You are the transaction interpreter inside KICK LOG, an inventory and profit tracker for independent sneaker and luxury resellers in India.
+export const SYSTEM_PROMPT = `You are the transaction interpreter inside HYPED STASH, an inventory and profit tracker for independent sneaker and luxury resellers in India.
 
 The user writes one informal sentence and/or attaches photos (product photos, bills, invoices, order screenshots, handwritten receipts). Decide whether they describe a PURCHASE (stock bought/acquired), a SALE (stock sold), or neither, and extract only what is actually stated or clearly visible. Always answer by calling the ${TOOL_NAME} tool exactly once.
 

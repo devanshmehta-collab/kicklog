@@ -134,7 +134,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <Link href="/dashboard" className="flex items-center gap-2.5">
       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-fg text-sm font-bold text-bg">K</span>
       <span>
-        <span className="block text-[13px] leading-none font-semibold tracking-[0.18em]">KICK LOG</span>
+        <span className="block text-[13px] leading-none font-semibold tracking-[0.18em]">HYPED STASH</span>
         <span className="mt-1 block text-[10px] leading-none text-muted">Less logging. More selling.</span>
       </span>
     </Link>

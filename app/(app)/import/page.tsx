@@ -137,7 +137,7 @@ export default function ImportPage() {
     <div className="mx-auto max-w-3xl space-y-5">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Product import</h1>
-        <p className="text-sm text-muted">Paste a product link from any website. Kick Log reads the page, fills in the details, and you review before saving. Only units you enter below become stock.</p>
+        <p className="text-sm text-muted">Paste a product link from any website. Hyped Stash reads the page, fills in the details, and you review before saving. Only units you enter below become stock.</p>
       </div>
       <Card className="p-4">
         <div className="flex flex-col gap-2 sm:flex-row">

@@ -8,7 +8,7 @@ const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-disp
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "Kick Log", template: "%s · Kick Log" },
+  title: { default: "Hyped Stash", template: "%s · Hyped Stash" },
   description: "Less logging. More selling. The operating system for sneaker and luxury resellers.",
 };
 

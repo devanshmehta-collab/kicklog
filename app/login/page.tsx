@@ -59,14 +59,14 @@ export default function LoginPage() {
           </h1>
           <p className="mt-6 max-w-sm text-muted">Say what you bought or sold — or snap the bill. Stock, profit and partner shares update on their own.</p>
         </div>
-        <div className="text-xs text-muted">KICK LOG · Less logging. More selling.</div>
+        <div className="text-xs text-muted">HYPED STASH · Less logging. More selling.</div>
       </aside>
 
       <section className="flex items-center justify-center px-5 py-12">
         <div className="w-full max-w-sm">
           <Link href="/" className="mb-10 flex items-center gap-2.5 lg:hidden">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-fg text-sm font-bold text-bg">K</span>
-            <span className="text-[13px] font-semibold tracking-[0.18em]">KICK LOG</span>
+            <span className="text-[13px] font-semibold tracking-[0.18em]">HYPED STASH</span>
           </Link>
           <h2 className="text-2xl font-semibold tracking-tight">{setup ? "Create the owner account" : "Seller sign in"}</h2>
           <p className="mt-1.5 text-sm text-muted">{setup ? "First run — this account will own the business." : "Welcome back. Your stock and profit are waiting."}</p>

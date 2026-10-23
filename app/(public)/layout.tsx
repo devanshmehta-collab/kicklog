@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const s = await getSettings(await getDb());
-  const name = s.businessName || "Kick Log";
+  const name = s.businessName || "Hyped Stash";
   const wa = s.whatsappNumber || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
   return (
     <div className="min-h-dvh">

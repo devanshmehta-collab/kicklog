@@ -1,4 +1,4 @@
-# KICK LOG — less logging, more selling
+# HYPED STASH — less logging, more selling
 
 An AI-assisted inventory, sales, sourcing and finance platform for independent sneaker and luxury resellers.
 Log a purchase or a sale with one sentence or a photo; the backend — not the model — decides what is safe to save and does all the maths.
@@ -32,7 +32,7 @@ cp .env.example .env.local
 npm run dev            # http://localhost:3000  → consumer showroom; sellers sign in at /login → /dashboard
 ```
 
-* **No `DATABASE_URL`?** Kick Log runs on an embedded PGlite database (real Postgres compiled to WASM) in `./.data/pglite`. Great for trying it out; use a real Postgres for production.
+* **No `DATABASE_URL`?** Hyped Stash runs on an embedded PGlite database (real Postgres compiled to WASM) in `./.data/pglite`. Great for trying it out; use a real Postgres for production.
 * **First visit:** `/login` shows a one-time "Create the owner account" form. Or set `OWNER_EMAIL` / `OWNER_PASSWORD` in `.env.local` to create the owner automatically.
 * **No `ANTHROPIC_API_KEY`?** Quick Log will not be able to interpret anything — every submission is preserved in Needs Review so nothing is lost. To explore the full flow offline set `AI_MODE=mock` (dev only; ignored in production). It swaps Claude for a small regex parser, while every validation rule, transaction and profit calculation stays the real code path.
 * Optional demo data: `npm run seed`, or with a dev server running, `BASE=http://localhost:3000 node scripts/demo-data.mjs` adds six published products with generated placeholder photos.
