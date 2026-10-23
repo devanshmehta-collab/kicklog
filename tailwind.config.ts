@@ -17,7 +17,10 @@ export default {
         accent: "rgb(var(--accent) / <alpha-value>)",
       },
       borderRadius: { xl: "0.9rem", "2xl": "1.2rem" },
-      fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "Segoe UI", "sans-serif"] },
+      fontFamily: {
+        sans: ["var(--font-sans)", "Inter", "ui-sans-serif", "system-ui", "Segoe UI", "sans-serif"],
+        display: ["var(--font-display)", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
     },
   },
   plugins: [],

@@ -30,9 +30,23 @@ input, textarea, select { @apply outline-none; }
 /* Grid children may shrink below their content width, so wide tables scroll inside their card instead of the page. */
 .grid > * { min-width: 0; }
 
-.display { letter-spacing: -0.035em; line-height: 0.95; font-weight: 600; }
+.display { font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.035em; line-height: 0.92; font-weight: 700; }
 .eyebrow { @apply text-[11px] font-medium tracking-[0.22em] uppercase text-accent; }
 .hairline { background: linear-gradient(90deg, transparent, rgb(var(--line)), transparent); height: 1px; }
 .grain { background-image: radial-gradient(rgb(var(--fg) / 0.05) 1px, transparent 1px); background-size: 22px 22px; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .rise { animation: rise .5s cubic-bezier(.2,.7,.2,1) both; }
+
+/* ───── storefront motion ───── */
+.reveal { opacity: 0; transform: translateY(18px) scale(0.985); transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); transition-delay: var(--d, 0ms); }
+.reveal[data-in="true"] { opacity: 1; transform: none; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee-track { display: flex; width: max-content; animation: marquee 38s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+.outline-text { -webkit-text-stroke: 1.5px rgb(var(--fg) / 0.28); color: transparent; }
+@keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(2%, -2%, 0) scale(1.06); } }
+.glow { animation: drift 9s ease-in-out infinite alternate; }
+@keyframes progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.progress-fill { transform-origin: left; animation: progress var(--dur, 6s) linear forwards; }
+@keyframes pop { 0% { opacity: 0; transform: translateY(14px) scale(.98); } 100% { opacity: 1; transform: none; } }
+.pop { animation: pop .55s cubic-bezier(.2,.7,.2,1) both; }

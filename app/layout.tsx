@@ -1,6 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { Bricolage_Grotesque, Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
+
+// Display face with real character for product names and headlines; Inter for everything functional.
+const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-display", display: "swap", axes: ["opsz", "wdth"] });
+const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "Kick Log", template: "%s · Kick Log" },
@@ -11,7 +16,7 @@ export const viewport: Viewport = { themeColor: "#0b0b0c", width: "device-width"
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${display.variable} ${sans.variable}`}>
       <body>
         <Providers>{children}</Providers>
       </body>
