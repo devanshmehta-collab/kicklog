@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { DB } from "../db";
 import { productImages, productImports, products } from "../db/schema";
 import { AppError, badRequest, notFound } from "../errors";
-import { findOrCreateVariant, normalizeKey } from "./inventory";
+import { createPurchase, findOrCreateVariant, normalizeKey } from "./inventory";
 import { parseProductPage, looksBlocked } from "./pageparse";
 import { fetchHtml, validateImportUrl } from "./webfetch";
 
@@ -196,6 +196,13 @@ export const ImportSaveSchema = z.object({
   /** Images are only attached when the user confirms they hold the rights to use them. */
   imageUrls: z.array(z.string().url().startsWith("https://")).default([]),
   imageRightsConfirmed: z.boolean().default(false),
+  /** Units you actually own, with what each cost you. Only these become stock. */
+  lots: z
+    .array(z.object({ size: z.string().trim().min(1).max(30), quantity: z.number().int().min(1).max(10000), unitCostPaise: z.number().int().nonnegative().max(1e13) }))
+    .max(60)
+    .default([]),
+  /** Put it on the public website straight away (needs a public price and at least one unit). */
+  publish: z.boolean().default(false),
 });
 
 /** Create a bare import record for manual entry when a site could not be read. */
@@ -207,13 +214,19 @@ export async function startManualImport(db: DB, rawUrl: string | null, userId: s
   return row.id;
 }
 
-/** Save the reviewed import as a DRAFT catalogue product with no stock. */
-export async function saveImport(db: DB, importId: string, input: z.infer<typeof ImportSaveSchema>) {
+/** Save the reviewed import as a catalogue product. Stock exists only for units entered here; it is a draft unless publish is chosen. */
+export async function saveImport(db: DB, importId: string, raw: z.input<typeof ImportSaveSchema>) {
+  const input = ImportSaveSchema.parse(raw); // defaults for anything the caller left out (no lots, no publish)
   const [imp] = await db.select().from(productImports).where(eq(productImports.id, importId));
   if (!imp) throw notFound("Import not found");
   if (imp.productId) throw badRequest("This import was already saved");
   if (input.imageUrls.length && !input.imageRightsConfirmed) {
     throw badRequest("Confirm you have the rights to use these images, or remove them");
+  }
+  if (new Set(input.lots.map((l) => l.size)).size !== input.lots.length) throw badRequest("Each size can only be listed once");
+  if (input.publish) {
+    if (input.publicPricePaise == null) throw badRequest("Set your public price before publishing");
+    if (!input.lots.length) throw badRequest("Add at least one unit in stock before publishing, otherwise customers won't see it");
   }
   return db.transaction(async (tx) => {
     const [p] = await tx
@@ -229,10 +242,22 @@ export async function saveImport(db: DB, importId: string, input: z.infer<typeof
         matchKey: normalizeKey(input.title),
         retailPricePaise: input.retailPricePaise ?? null,
         publicPricePaise: input.publicPricePaise ?? null,
-        status: "draft",
+        status: input.publish ? "published" : "draft",
       })
       .returning();
     for (const s of input.sizes) await findOrCreateVariant(tx, p.id, s);
+    for (const lot of input.lots) {
+      await createPurchase(tx, {
+        idempotencyKey: `import:${importId}:${lot.size}`,
+        product: { name: input.title },
+        productId: p.id,
+        size: lot.size,
+        quantity: lot.quantity,
+        totalCostPaise: lot.unitCostPaise * lot.quantity,
+        source: "manual",
+        notes: `Imported from ${imp.url}`,
+      });
+    }
     if (input.imageUrls.length) {
       await tx.insert(productImages).values(input.imageUrls.map((url, i) => ({ productId: p.id, url, position: i, isPrimary: i === 0 })));
     }

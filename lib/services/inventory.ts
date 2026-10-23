@@ -88,6 +88,8 @@ export async function findOrCreateVariant(tx: Tx, productId: string, size: strin
 export interface PurchaseInput {
   idempotencyKey: string;
   product: ProductFields;
+  /** Attach to this exact product instead of matching/creating one by name (used by product import). */
+  productId?: string;
   size: string;
   quantity: number;
   /** Fully landed cost of the whole lot (see computePurchaseCost / computeLandedCost). */
@@ -158,7 +160,9 @@ export async function createPurchase(db: DB, input: PurchaseInput): Promise<Purc
 
   try {
     return await db.transaction(async (tx) => {
-      const product = await findOrCreateProduct(tx, input.product);
+      const product = input.productId
+        ? (await tx.select().from(products).where(eq(products.id, input.productId)))[0] ?? (await findOrCreateProduct(tx, input.product))
+        : await findOrCreateProduct(tx, input.product);
       const variant = await findOrCreateVariant(tx, product.id, input.size);
       const unitCostPaise = Math.round(input.totalCostPaise / input.quantity);
       const l = input.landed ?? {};

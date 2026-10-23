@@ -16,6 +16,10 @@ test("the Definition-of-Done workflow", async ({ page, request }) => {
   await expect(page).toHaveURL(/\/dashboard/);
   await expect(page.getByText("AI Quick Log")).toBeVisible();
 
+  // The dev server compiles each API route on first use; do it now (405 is the expected reply) so timings below are about the app.
+  await page.request.get("/api/log", { timeout: 150_000 });
+  await page.request.get("/api/reviews", { timeout: 150_000 });
+
   // 3-4. purchase appears in In Stock
   await log(page, "Bought AJ1 Chicago size 10 for ₹18,000 incl shipping");
   await expect(page.getByText(/Added AJ1 Chicago \(size 10\)/)).toBeVisible({ timeout: 30_000 });
