@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { PhotoIntake } from "@/components/image-editor";
 import { SizePicker } from "@/components/size-picker";
+import { useStockEditor } from "@/components/stock-editor";
 import { Dialog, Field, Input, Select, Textarea } from "@/components/ui/primitives";
 import { ApiError, apiFetch, newKey, useGet, useSend } from "@/lib/client/api";
 import { rupeesToPaise } from "@/lib/money";
@@ -204,6 +205,7 @@ export function EditProductDialog({ product, onClose }: { product: ProductLite |
   const [f, setF] = React.useState<Record<string, string>>({});
   const [error, setError] = React.useState("");
   const send = useSend<Record<string, unknown>, unknown>("PATCH", `/api/products/${product?.id}`);
+  const stock = useStockEditor(product ? { id: product.id, category: f.category || product.category } : null);
   React.useEffect(() => {
     if (!product) return;
     setF({
@@ -221,9 +223,10 @@ export function EditProductDialog({ product, onClose }: { product: ProductLite |
         name: f.name, brand: f.brand || null, category: f.category, model: f.model || null, colorway: f.colorway || null, sku: f.sku || null,
         condition: f.condition, description: f.description || null, retailPricePaise: rupee(f.retail), publicPricePaise: rupee(f.price),
       });
+      await stock.submit();
       onClose();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Could not save");
+      setError(e instanceof Error ? e.message : "Could not save");
     }
   }
   return (
@@ -240,8 +243,9 @@ export function EditProductDialog({ product, onClose }: { product: ProductLite |
         <Field label="Public price (₹)"><Input value={f.price ?? ""} onChange={set("price")} inputMode="decimal" /></Field>
         <Field label="Description" className="sm:col-span-2"><Textarea rows={3} value={f.description ?? ""} onChange={set("description")} /></Field>
       </div>
+      {stock.element}
       {error && <p role="alert" className="mt-3 text-sm text-loss">{error}</p>}
-      <div className="mt-4 flex justify-end gap-2"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={save} disabled={send.isPending}>Save changes</Button></div>
+      <div className="mt-4 flex justify-end gap-2"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={save} disabled={send.isPending}>{stock.pendingUnits > 0 ? `Save & add ${stock.pendingUnits} unit${stock.pendingUnits === 1 ? "" : "s"}` : "Save changes"}</Button></div>
     </Dialog>
   );
 }
